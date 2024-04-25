@@ -1,16 +1,15 @@
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import ru.jdbc.util.ConnectionManager;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+@Slf4j
 public class JdbcRunner {
     public static void main(String[] args) throws SQLException {
 
@@ -18,15 +17,13 @@ public class JdbcRunner {
 //        var result = getTicketsByFlightId(flightId);
 //        System.out.println(result);
 
-        LocalDateTime start = LocalDate.of(2020, 1, 1).atStartOfDay();
-        LocalDateTime end = LocalDate.now().atStartOfDay();
+//        LocalDateTime start = LocalDate.of(2020, 1, 1).atStartOfDay();
+//        LocalDateTime end = LocalDate.now().atStartOfDay();
+//
+//        System.out.println(getFlightsBetween(start, end));
 
-        System.out.println(getFlightsBetween(start, end));
+        checkMetaDate();
     }
-
-
-    final static Logger LOG = LoggerFactory.getLogger(JdbcRunner.class);
-
 
     // alt+Enter указать, что мы испольуем postgresql (Inject language or reference)
 
@@ -102,6 +99,30 @@ public class JdbcRunner {
         }
     }
 
+    private static void checkMetaDate() {
+        try (
+                var connection = ConnectionManager.getConnection()) {
+            var metaDate = connection.getMetaData();
+            var catalogs = metaDate.getCatalogs();
+            while (catalogs.next()) {
+                var catalog = catalogs.getString(1);
+                var schemas = metaDate.getSchemas();
+                while (schemas.next()) {
+                    var schema = schemas.getString("TABLE_SCHEM");
+                    var tables = metaDate.getTables(catalog, schema, "%", new String[] {"TABLE"});
+                    if (schema.equals("public")) {
+
+                        while (tables.next()) {
+                            System.out.println(tables.getString("TABLE_NAME"));
+                        }
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e.getMessage());
+        }
+    }
+
     private static List<Long> getFlightsBetween(LocalDateTime start, LocalDateTime end) throws SQLException {
 
         String sql = """
@@ -115,6 +136,9 @@ public class JdbcRunner {
         try (var conn = ConnectionManager.getConnection();
              // Использование PreparedStatement для выполнения запросов
              var pstmt = conn.prepareStatement(sql)) {
+            pstmt.setFetchSize(50);
+            pstmt.setQueryTimeout(10);
+            pstmt.setMaxRows(100);
 
             System.out.println(pstmt);
             pstmt.setTimestamp(1, Timestamp.valueOf(start));
@@ -133,7 +157,7 @@ public class JdbcRunner {
         return flights;
     }
     /** TODO:
-    1. Почему pstmt безопаснее stmt? (SQL injection)
+     1. Почему pstmt безопаснее stmt? (SQL injection)
      2. var в java
      */
 
