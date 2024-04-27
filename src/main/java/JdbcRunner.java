@@ -84,7 +84,7 @@ public class JdbcRunner {
                 """;
 
         List<Long> result = new ArrayList<>();
-        try (var conn = ConnectionManager.getConnection();
+        try (var conn = ConnectionManager.get();
              var preparedStatement = conn.prepareStatement(sql)) {
             preparedStatement.setLong(1, flightId);
 
@@ -101,7 +101,7 @@ public class JdbcRunner {
 
     private static void checkMetaDate() {
         try (
-                var connection = ConnectionManager.getConnection()) {
+                var connection = ConnectionManager.get()) {
             var metaDate = connection.getMetaData();
             var catalogs = metaDate.getCatalogs();
             while (catalogs.next()) {
@@ -133,7 +133,7 @@ public class JdbcRunner {
 
         List<Long> flights = new ArrayList<>();
 
-        try (var conn = ConnectionManager.getConnection();
+        try (var conn = ConnectionManager.get();
              // Использование PreparedStatement для выполнения запросов
              var pstmt = conn.prepareStatement(sql)) {
             pstmt.setFetchSize(50);

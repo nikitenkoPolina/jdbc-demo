@@ -25,8 +25,8 @@ public class BlobRunner {
                 WHERE id = 1
                 """;
         try (
-        var connection = ConnectionManager.getConnection();
-        var stmt = connection.prepareStatement(sql)) {
+                var connection = ConnectionManager.get();
+                var stmt = connection.prepareStatement(sql)) {
             stmt.setBytes(1, Files.readAllBytes(Path.of("resources", "Cathay_Pacific_Boeing_777.jpg")));
             stmt.executeUpdate();
 
@@ -41,7 +41,7 @@ public class BlobRunner {
                 WHERE id = ?
                 """;
         try (
-                var connection = ConnectionManager.getConnection();
+                var connection = ConnectionManager.get();
                 var pstmt = connection.prepareStatement(sql)
         ) {
             pstmt.setInt(1, 1);

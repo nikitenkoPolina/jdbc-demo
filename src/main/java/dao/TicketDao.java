@@ -56,7 +56,7 @@ public class TicketDao {
         List<Ticket> tickets = new ArrayList<>();
 
         try (
-                Connection connection = ConnectionManager.getConnection();
+                Connection connection = ConnectionManager.get();
                 var pstmt = connection.prepareStatement(FIND_ALL)
                 ) {
 
@@ -78,7 +78,7 @@ public class TicketDao {
 
     public Optional<Ticket> findById(Long id) {
         try (
-                Connection connection = ConnectionManager.getConnection();
+                Connection connection = ConnectionManager.get();
                 var pstmt = connection.prepareStatement(FIND_BY_FLIGHT_ID_SQL);
         ) {
 
@@ -99,7 +99,7 @@ public class TicketDao {
     }
 
     public void update(Ticket ticket) {
-        try (Connection connection = ConnectionManager.getConnection();
+        try (Connection connection = ConnectionManager.get();
              var pstmt = connection.prepareStatement(UPDATE_SQL)) {
             pstmt.setString(1, ticket.getPassengerName());
             pstmt.setString(2, ticket.getPassengerNo());
@@ -115,7 +115,7 @@ public class TicketDao {
     }
 
     public Ticket save(Ticket ticket) {
-        try (var connection = ConnectionManager.getConnection();
+        try (var connection = ConnectionManager.get();
              var pstmt = connection.prepareStatement(SAVE_SQL, Statement.RETURN_GENERATED_KEYS)) {
             pstmt.setString(1, ticket.getPassengerNo());
             pstmt.setString(2, ticket.getPassengerName());
@@ -144,7 +144,7 @@ public class TicketDao {
 
     public boolean delete(Long id) {
 
-        try (var connection = ConnectionManager.getConnection();
+        try (var connection = ConnectionManager.get();
              var pstmt = connection.prepareStatement(DELETE_SQL)) {
             pstmt.setLong(1, id);
             return pstmt.executeUpdate() > 0;

@@ -14,7 +14,7 @@ public class TransactionRunner {
         PreparedStatement deleteFlightStatement = null;
         PreparedStatement deleteTicketStatement = null;
         try {
-            connection = ConnectionManager.getConnection();
+            connection = ConnectionManager.get();
             deleteFlightStatement = connection.prepareStatement(deleteFlightSql);
             deleteTicketStatement = connection.prepareStatement(deleteTicketSql);
             connection.setAutoCommit(false);
