@@ -3,7 +3,6 @@ import ru.jdbc.util.ConnectionManager;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.sql.Statement;
 
 public class TransactionRunner {
 
@@ -18,24 +17,25 @@ public class TransactionRunner {
             connection = ConnectionManager.getConnection();
             deleteFlightStatement = connection.prepareStatement(deleteFlightSql);
             deleteTicketStatement = connection.prepareStatement(deleteTicketSql);
-                connection.setAutoCommit(false);
+            connection.setAutoCommit(false);
 
-                deleteFlightStatement.setLong(1, flightId);
-                deleteTicketStatement.setLong(1, flightId);
+            deleteFlightStatement.setLong(1, flightId);
+            deleteTicketStatement.setLong(1, flightId);
 
-                deleteTicketStatement.executeUpdate();
+            deleteTicketStatement.executeUpdate();
 
-                if (true) {
-                    throw new RuntimeException("This is a test");
-                }
-                deleteFlightStatement.executeUpdate();
+            if (true) {
+                throw new RuntimeException("This is a test");
+            }
+            deleteFlightStatement.executeUpdate();
 
-                connection.commit();
+            connection.commit();
 
         } catch (Exception e) {
             if (connection != null) {
                 connection.rollback();
-            } throw e;
+            }
+            throw e;
         } finally {
             if (connection != null) {
                 connection.close();
