@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
  * DAO занимается преобразованием реляционной модели в объектную и наоборот.
  * Представляет сообой Singleton: только один объект класса dao нам нужен
  */
-public class TicketDao {
+public class TicketDao implements Dao<Long, Ticket> {
 
     private static final TicketDao INSTANCE = new TicketDao();
     private static final String DELETE_SQL = """
@@ -43,13 +43,29 @@ public class TicketDao {
             """;
 
     private static final String FIND_ALL = """
-                    SELECT id, passenger_no, passenger_name, flight_id, seat_no, cost
-                    FROM ticket
-                    """;
+                    SELECT ticket.id,
+                            passenger_no,
+                            passenger_name,
+                            flight_id,
+                            seat_no,
+                            cost,
+                            f.status,
+                            f.flight_no,
+                            f.aircraft_id,
+                            f.arrival_airport_code,
+                            f.arrival_date,
+                            f.departure_airport_code,
+                            f.departure_date
+                                FROM ticket
+                                JOIN flight f
+                                    ON ticket.flight_id = f.id
+                """;
 
     private static final String FIND_BY_FLIGHT_ID_SQL = FIND_ALL + """
-            WHERE id = ?
+            WHERE ticket.id = ?
             """;
+
+    private final FlightDao flightDao = FlightDao.getInstance();
 
     private TicketDao() {
     }
@@ -102,7 +118,7 @@ public class TicketDao {
         try (
                 Connection connection = ConnectionManager.get();
                 var pstmt = connection.prepareStatement(FIND_ALL)
-                ) {
+        ) {
 
             pstmt.executeQuery();
 
@@ -123,7 +139,7 @@ public class TicketDao {
     public Optional<Ticket> findById(Long id) {
         try (
                 Connection connection = ConnectionManager.get();
-                var pstmt = connection.prepareStatement(FIND_BY_FLIGHT_ID_SQL);
+                var pstmt = connection.prepareStatement(FIND_BY_FLIGHT_ID_SQL)
         ) {
 
             pstmt.setLong(1, id);
@@ -133,7 +149,7 @@ public class TicketDao {
             Ticket ticket = null;
 
             if (rs.next()) {
-               buildTicket(rs);
+               ticket = buildTicket(rs);
             }
 
             return Optional.ofNullable(ticket);
@@ -147,7 +163,7 @@ public class TicketDao {
              var pstmt = connection.prepareStatement(UPDATE_SQL)) {
             pstmt.setString(1, ticket.getPassengerName());
             pstmt.setString(2, ticket.getPassengerNo());
-            pstmt.setLong(3, ticket.getFlightId());
+            pstmt.setLong(3, ticket.getFlight().id());
             pstmt.setString(4, ticket.getSeatNo());
             pstmt.setBigDecimal(5, ticket.getCost());
             pstmt.setLong(6, ticket.getId());
@@ -163,7 +179,7 @@ public class TicketDao {
              var pstmt = connection.prepareStatement(SAVE_SQL, Statement.RETURN_GENERATED_KEYS)) {
             pstmt.setString(1, ticket.getPassengerNo());
             pstmt.setString(2, ticket.getPassengerName());
-            pstmt.setLong(3, ticket.getFlightId());
+            pstmt.setLong(3, ticket.getFlight().id());
             pstmt.setString(4, ticket.getSeatNo());
             pstmt.setBigDecimal(5, ticket.getCost());
 
@@ -199,11 +215,22 @@ public class TicketDao {
     }
 
     private Ticket buildTicket(ResultSet rs) throws SQLException {
+//        var flight = new Flight(
+//                rs.getLong("flight_id"),
+//                rs.getString("flight_no"),
+//                rs.getTimestamp("departure_date").toLocalDateTime(),
+//                rs.getString("departure_airport_code"),
+//                rs.getTimestamp("arrival_date").toLocalDateTime(),
+//                rs.getString("arrival_airport_code"),
+//                rs.getInt("aircraft_id"),
+//                rs.getString("status")
+//        );
+
         return new Ticket(
                 rs.getLong("id"),
                 rs.getString("passenger_no"),
                 rs.getString("passenger_name"),
-                rs.getLong("flight_id"),
+                flightDao.findById(rs.getLong("flight_id"), rs.getStatement().getConnection()).orElse(null),
                 rs.getString("seat_no"),
                 rs.getBigDecimal("cost")
         );

@@ -7,6 +7,12 @@ import java.math.BigDecimal;
 public class DaoRunner {
 
     public static void main(String[] args) {
+        var ticket = TicketDao.getInstance().findById(4L);
+
+        System.out.println(ticket);
+    }
+
+    private static void filterTest() {
         var filter = new TicketFilter(3, 2, null, "A1");
         var ticketDao = TicketDao.getInstance();
         System.out.println(ticketDao.findAll(filter));
@@ -36,7 +42,7 @@ public class DaoRunner {
 
         ticket.setPassengerNo("123456");
         ticket.setPassengerName("Polina Nikitenko");
-        ticket.setFlightId(3L);
+        //ticket.setFlight(3L);
         ticket.setSeatNo("A17");
         ticket.setCost(BigDecimal.TEN);
 

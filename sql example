@@ -1,0 +1,5 @@
+
+explain analyze select *
+                from flight
+                where id > 4
+                limit 2;
